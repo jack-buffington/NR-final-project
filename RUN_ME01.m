@@ -70,15 +70,15 @@ for I = 1:desiredLidarScans
    end
    
    numberOfPoints = size(XYZ,1);
-   colors = zeros(numberOfPoints,3);
-   
-   colorIndex = numberOfPoints/3;
-   pointsPerSector = colorIndex;
-   colors(1:colorIndex,:) = repmat([1 0 0],pointsPerSector,1);
-   colors(colorIndex:colorIndex + pointsPerSector,:) = repmat([0 1 0],pointsPerSector,1);
-   colorIndex = colorIndex + pointsPerSector;
-   colors(colorIndex:end,:) = repmat([1 0 0],numberOfPoints-colorindex,1);
-   
+%    colors = zeros(numberOfPoints,3);
+%    
+%    colorIndex = numberOfPoints/3;
+%    pointsPerSector = colorIndex;
+%    colors(1:colorIndex,:) = repmat([1 0 0],pointsPerSector,1);
+%    colors(colorIndex:colorIndex + pointsPerSector,:) = repmat([0 1 0],pointsPerSector,1);
+%    colorIndex = colorIndex + pointsPerSector;
+%    colors(colorIndex:end,:) = repmat([1 0 0],numberOfPoints-colorindex,1);
+%    
    
    plot3(XYZ(:,1),XYZ(:,2),XYZ(:,3),'.');   % Refer to junk01 to see how to color the points
    hold on
