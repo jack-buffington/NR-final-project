@@ -32,13 +32,13 @@ function [time, XYZpoints] = getLidarAroundTime(requestedTime, velodyne)
 
          % get the strongest return
          for J = 1:16
-            ed(edIndex).strongest(J) = (2 * (uint16(b(loc+1)) * 256)) + uint16(b(loc));
+            ed(edIndex).strongest(J) = double((2 * (uint16(b(loc+1)) * 256)) + uint16(b(loc)));
             loc = loc + 3; % skip over the reflectivity byte
          end
 
          % get the last return
          for J = 1:16
-            ed(edIndex).last(J) = (2 * (uint16(b(loc+1)) * 256)) + uint16(b(loc));
+            ed(edIndex).last(J) = double((2 * (uint16(b(loc+1)) * 256)) + uint16(b(loc)));
             loc = loc + 3; % skip over the reflectivity byte
          end
          edIndex = edIndex + 1;
@@ -51,11 +51,12 @@ function [time, XYZpoints] = getLidarAroundTime(requestedTime, velodyne)
 
    % go through all angles and interpolate the radians
    % this could be improved.  it is inefficient
-   for I = 2:size(ed,1)-2
+   for I = 2:size(ed,2)-2
 
       t = ed(I-1).azimuthRadians;
-      if ed(I).azimuthRadians == t
-         ed(I).azimuthRadians = (ed(I+1).azimuthRadians + t)/2; %#ok<*SAGROW>
+      u = ed(I).azimuthRadians;
+      if u == t
+         ed(I).azimuthRadians = (ed(I+1).azimuthRadians + t)/2; 
       end
 
       % special case for end of revolution
@@ -78,10 +79,16 @@ function [time, XYZpoints] = getLidarAroundTime(requestedTime, velodyne)
    index = 1;
    for I = 1:size(ed,2)
       for J = 1:16
-      XYZpoints(index,1) = double(ed(I).last(J)) * cos(angles(J)) * sin(ed(I).azimuthRadians);
-      XYZpoints(index,2) = double(ed(I).last(J)) * cos(angles(J)) * cos(ed(I).azimuthRadians);
-      XYZpoints(index,3) = double(ed(I).last(J)) * sin(angles(J));
-      index = index + 1;
+         if J == 16 % only give me one line per point cloud
+         XYZpoints(index,1) = double(ed(I).last(J)) * cos(angles(J)) * sin(ed(I).azimuthRadians);
+         XYZpoints(index,2) = double(ed(I).last(J)) * cos(angles(J)) * cos(ed(I).azimuthRadians);
+         XYZpoints(index,3) = double(ed(I).last(J)) * sin(angles(J));
+         if XYZpoints(index,1) ~= 0 && ... % don't store the bad points
+            XYZpoints(index,2) ~= 0 && ...
+            XYZpoints(index,3) ~= 0 
+            index = index + 1;
+         end
+         end
       end
    end
    

@@ -1,6 +1,10 @@
-% % this code loads one map and colors the points based on a provided map
+% % this code loads one lidar scan and colors the points based on a
+% provided image.
+
+% XYZ coordinates are in millimeters
 clear; 
 load('bag.mat');
+
 
 
 bs = select(bag,'Topic','velodyne_packets');
@@ -36,6 +40,26 @@ velodyneFileOffsets = zeros(desiredLidarScans,1);
    fprintf('Velodyne message found at offset %d \n',currentOffset);
    
 
+% load an image
+image = imread('eye.jpg');
+
+% For each point in the point cloud, color it using the image.
+
+pixelsPerMeter = 5;
+% center the image
+xOffset = 140;  % pixels
+yOffset = 84; % pixels
+
+
+% How to calculate which pixel to use to color a point:
+% * Take the X & Y coordinates and divide them by 1000 to get them into
+%   meters
+% * Multiply those values by pixelsPerMeter to get the pixel offset
+% * Add xOffset or yOffset to get the actual pixel location
+% * Check to see if this is in the bounds of the image.  If so, then use
+%   that pixel's value.
+
+
 
 
 
@@ -47,29 +71,43 @@ velodyneFileOffsets = zeros(desiredLidarScans,1);
 for I = 1:desiredLidarScans
    ed = extractDataFromMessages(bs,velodyneFileOffsets(I));    
    XYZ = convertRawDataToXYZpoints(ed);
-   
-   
    numberOfPoints = size(XYZ,1);
    colors = zeros(numberOfPoints,3);
-   
-   colorIndex = numberOfPoints/3;
-   pointsPerSector = colorIndex;
-   %color1start  = 1;
-   color2start = pointsPerSector;
-   color3start = pointsPerSector*2;
-   color3end = numberOfPoints;
-   
-   
-   colors(1:color2start-1,:) = repmat([1 0 0],color2start-1,1);  
-   colors(color2start:color3start-1,:) = repmat([0 1 0],color3start-color2start,1);
-   colors(color3start:color3end,:) = repmat([0 0 1],color3end-color3start+1,1);
+      
+   for J = 1:size(XYZ,1)
+      
+
+      xLoc = (XYZ(J,1)*pixelsPerMeter)/1000;
+      yLoc = (XYZ(J,2)*pixelsPerMeter)/1000;
+      xLoc = int32(xLoc + xOffset);
+      yLoc = int32(yLoc + yOffset);
+
+      if xLoc > 0 && yLoc > 0 && xLoc < size(image,2)+1 && yLoc < size(image,1) + 1
+         pixelValue = double(image(yLoc,xLoc));
+         pixelValue = pixelValue / 256; % should be in the range of 0->1
+         colors(J,:) = [pixelValue pixelValue pixelValue];
+      else
+         colors(J,:) = [0 0 0];
+      end
+   end
+%    colorIndex = numberOfPoints/3;
+%    pointsPerSector = colorIndex;
+%    %color1start  = 1;
+%    color2start = pointsPerSector;
+%    color3start = pointsPerSector*2;
+%    color3end = numberOfPoints;
+%    
+%    
+%    colors(1:color2start-1,:) = repmat([1 0 0],color2start-1,1);  
+%    colors(color2start:color3start-1,:) = repmat([0 1 0],color3start-color2start,1);
+%    colors(color3start:color3end,:) = repmat([0 0 1],color3end-color3start+1,1);
    
    scatter3(XYZ(:,1),XYZ(:,2),XYZ(:,3),10,colors,'filled'), view(-60,60);
    hold on
    drawnow
 end
 axis equal
-colormap(colors);
+%colormap(colors);
 
 
 
