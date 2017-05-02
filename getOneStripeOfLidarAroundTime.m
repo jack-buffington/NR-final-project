@@ -1,4 +1,4 @@
-function [time, XYZpoints] = getLidarAroundTime(requestedTime, velodyne)
+function [time, XYZpoints] = getOneStripeOfLidarAroundTime(requestedTime, velodyne)
    % returns XYZ points from the velodyne message closest to the requested time.
    % returns the time that the message was associated with.
    % requestedTime is given in system time.
@@ -75,14 +75,16 @@ function [time, XYZpoints] = getLidarAroundTime(requestedTime, velodyne)
    XYZpoints = zeros(size(ed,1),3);
    %XYZ2 = zeros(size(ed,1),3);
 
-   disp('calculating XYZ values');
+   %disp('calculating XYZ values');
    index = 1;
    for I = 1:size(ed,2)
       for J = 1:16
-         XYZpoints(index,1) = double(ed(I).last(J)) * cos(angles(J)) * sin(ed(I).azimuthRadians);
-         XYZpoints(index,2) = double(ed(I).last(J)) * cos(angles(J)) * cos(ed(I).azimuthRadians);
-         XYZpoints(index,3) = double(ed(I).last(J)) * sin(angles(J));
-         index = index + 1;
+         if J == 16 % only give me one line per point cloud
+            XYZpoints(index,1) = double(ed(I).last(J)) * cos(angles(J)) * sin(ed(I).azimuthRadians);
+            XYZpoints(index,2) = double(ed(I).last(J)) * cos(angles(J)) * cos(ed(I).azimuthRadians);
+            XYZpoints(index,3) = double(ed(I).last(J)) * sin(angles(J));
+            index = index + 1;
+         end
       end
    end
 end

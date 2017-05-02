@@ -1,0 +1,29 @@
+mapping01.m   - loads a ROS bag file and saves out velodyne messages (RUN FIRST)
+
+extractRawData.m - loads messages.mat and extracts out the velodyne messages and saves it in 
+		   a more accessable format (RUN SECOND)
+
+convertExtractedData - Loads extractedData and plots a single sweep from the lidar (RUN THIRD)
+
+getTransforms - % gets the TransForms from the tf 'sensor'
+
+getTransforms02 - gets the TransForms from the lilred_velocity_controller/odom 'sensor'
+
+extractDataFromMessages - function that when given a bag select of velodyne messages and a file 
+		          offset, returns the data in the format of extractRawData.m
+
+RUN_ME01.m - Takes multiple velodyne messages and attempts to combine them.
+
+RUN_ME02.m - Colors a point cloud using a given image.
+
+getLidarAroundTime.m - gives you XYZ points for the lidar scan closest to the given time
+
+getTransformsAtTime - interpolates the transforms so that they give you the transform at the 
+                      requested time.
+processTransforms.m - converts the twist info into translation and rotation so that I don't 
+                      have to integrate up to the needed time for each frame
+
+
+
+
+

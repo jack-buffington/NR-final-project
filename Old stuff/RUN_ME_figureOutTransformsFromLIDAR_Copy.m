@@ -3,6 +3,7 @@ clear
 load('velodyne.mat');
 load('correctedOdometry.mat'); % loads 'odom' which is [X Y heading]
 
+close all
 
 
 
@@ -18,9 +19,9 @@ load('correctedOdometry.mat'); % loads 'odom' which is [X Y heading]
    lastMean  = [0 0 0];
    firstTime  = true;
    %for I = 1:numScans
-   for I = 20:21
+   for I = 18:21
       timeOffset = (totalTime / numScans)*I;
-      [time,XYZ] = getLidarAroundTime(startTime + timeOffset,velodyne); 
+      [time,XYZ] = getOneStripeOfLidarAroundTime(startTime + timeOffset,velodyne); 
       
       
       
@@ -92,9 +93,12 @@ load('correctedOdometry.mat'); % loads 'odom' which is [X Y heading]
          XYZdistances = [XYZdistances(index:1440); XYZdistances(1:index-1)];
          
          % figure out the offset angle
+%          offsetAngle = double(index);
+%          offsetAngle = offsetAngle / 4; % the angle in degrees
+%          offsetAngle = offsetAngle * (pi/180); % now it is in radians
          offsetAngle = double(index);
-         offsetAngle = offsetAngle / 4; % the angle in degrees
-         offsetAngle = offsetAngle * (pi/180); % now it is in radians
+         offsetAngle = offsetAngle / size(XYZdistances,1); % should be in range of 0->1
+         offsetAngle = offsetAngle * 2 * pi; % now it is in radians
          
          
          
