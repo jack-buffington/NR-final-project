@@ -72,16 +72,19 @@ function [time, XYZpoints] = getLidarAroundTime(requestedTime, velodyne)
    % Convert to radians
    angles = (angles / 360)* 2 * pi ;
 
-   XYZpoints = zeros(size(ed,1),3);
+   XYZpoints = zeros(size(ed,2),3);
    %XYZ2 = zeros(size(ed,1),3);
 
-   disp('calculating XYZ values');
+   %disp('calculating XYZ values');
    index = 1;
    for I = 1:size(ed,2)
       for J = 1:16
-         XYZpoints(index,1) = double(ed(I).last(J)) * cos(angles(J)) * sin(ed(I).azimuthRadians);
-         XYZpoints(index,2) = double(ed(I).last(J)) * cos(angles(J)) * cos(ed(I).azimuthRadians);
-         XYZpoints(index,3) = double(ed(I).last(J)) * sin(angles(J));
+         l = ed(I).last(J);
+         a1 = angles(J);
+         a2 = ed(I).azimuthRadians;
+         XYZpoints(index,1) = double(l) * cos(a1) * sin(a2);
+         XYZpoints(index,2) = double(l) * cos(a1) * cos(a2);
+         XYZpoints(index,3) = double(l) * sin(a1);
          index = index + 1;
       end
    end

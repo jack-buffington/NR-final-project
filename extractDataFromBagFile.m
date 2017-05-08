@@ -7,6 +7,7 @@ function data = extractDataFromBagFile(bagFilePath, topicName, outputFileName, v
    bag = rosbag(bagFilePath);
    
    
+   
    eval(sprintf('%s = select(bag,''Topic'',topicName);',variableName))
 
    eval(sprintf('save(outputFileName,''%s'');',variableName))

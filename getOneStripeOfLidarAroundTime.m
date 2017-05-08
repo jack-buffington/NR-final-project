@@ -7,7 +7,7 @@ function [time, XYZpoints] = getOneStripeOfLidarAroundTime(requestedTime, velody
    timeDifferences = abs(times - requestedTime);
    [~,index] = min(timeDifferences);
    time = times(index);
-   
+   fprintf('using index %d\n',index);
    % 'index' now contains the index for the message with the closest time.
    velodyneMessage = readMessages(velodyne,index); 
    

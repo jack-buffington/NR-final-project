@@ -1,30 +1,36 @@
+% This file generates a series of poses using LIDAR data only.
+% Old comment below.  No longer necessary but might be useful for
+% comparison
 % run processTransforms before running this so that it can load correctedOdometry.mat
 clear
 load('velodyne.mat');
-load('correctedOdometry.mat'); % loads 'odom' which is [X Y heading]
+%load('correctedOdometry.mat'); % loads 'odom' which is [X Y heading]
 
 close all
+global XYZ
+global lastXYZ
 
-
+numberOfkeyFrames = 100;
+poses = zeros(numberOfkeyFrames,4); % [X Y rotation time]
 
 
    startTime = velodyne.StartTime;
    stopTime = velodyne.EndTime;
    totalTime = stopTime - startTime;
 
-   numScans = 50;
 
    lastDistances = zeros(1440,1);
    
-   lastMean  = [0 0 0];
+   %lastMean  = [0 0 0];
    firstTime  = true;
-   %for I = 1:numScans
-   for I = 18:21
-      timeOffset = (totalTime / numScans)*I;
+   
+   lastTranslationVector = [0 0];
+   
+   totalTranslation = [0 0 0];
+   for I = 10:numberOfkeyFrames-10
+      timeOffset = (totalTime / numberOfkeyFrames)*I;
       [time,XYZ] = getOneStripeOfLidarAroundTime(startTime + timeOffset,velodyne); 
-      
-      
-      
+
       
       % Try to figure out a rotation and translation without using odometry
       % at all.  
@@ -64,75 +70,77 @@ close all
       % enforce that the output is exactly 1440 values wide
       XYZdistances = imresize(XYZdistances, [1440 1], 'nearest');
       
-%       figure(10)
-%       mm = subplot(2,3,1);
-%       cla(mm)
-%       plot(lastDistances, 'b');
-%       hold on
-%       plot(XYZdistances, 'r');
-%       title('unmodified');
-      
-      
-      % PLAN:
-      % 1. Find the angular offset and remove it from XYZangles.
-      % 2. sort the angles and distances
-      % 3. verify that they are lining up.
-      % 4. Convert the angles and distances back into points.   
-      % 5. Points from like angles should be roughly the same point in space
-      %    so base the translation on their differences.  
-      
+
       if firstTime == true
          lastDistances = XYZdistances;
          lastMean = XYZmean;
          firstTime = false;
+         lastXYZ = XYZ;
+         XYZ2 = XYZ;
+         poses(1,4) = time;
       else
          % try to find the angle between scans
-         index = findOffsetIndex(lastDistances,XYZdistances)
+         index = findOffsetIndex(lastDistances,XYZdistances);
          
          % adjust XYZdistances to match lastDistances         
          XYZdistances = [XYZdistances(index:1440); XYZdistances(1:index-1)];
          
          % figure out the offset angle
-%          offsetAngle = double(index);
-%          offsetAngle = offsetAngle / 4; % the angle in degrees
-%          offsetAngle = offsetAngle * (pi/180); % now it is in radians
          offsetAngle = double(index);
          offsetAngle = offsetAngle / size(XYZdistances,1); % should be in range of 0->1
          offsetAngle = offsetAngle * 2 * pi; % now it is in radians
-         
-         
-         
-         
-%          nn = subplot(2,3,2);
-%          cla(nn)
-%          plot(lastDistances, 'b');
-%          hold on
-%          plot(XYZdistances, 'r');
-%          title('lastDistances: B  XYZdistances: R');
-         
-         % at this point, index is how many quarters of a degree to rotate
 
          % Correct the rotation
          rotm = eul2rotm([offsetAngle 0 0]);
          XYZ = XYZ * rotm;
          
-%          for J = 1:size(XYZ,1)
-%             XYZ(J,:) = XYZ(J,:) - lastMean;
-%          end
          
+         
+      options = optimset('Display', 'off') ; % suppress the fmincon messages
+      translationVector = fmincon(@scoringFunction, lastTranslationVector,[],[],[],[],[],[],[],options);
+         
+
+      %translationVector = fmincon(@scoringFunction, lastTranslationVector);
+      
+      translationVector2 = [translationVector 0];
+      
+         XYZ2 = zeros(size(XYZ));
+         
+         for J = 1:size(XYZ,1) 
+           XYZ2(J,:) = XYZ(J,:) + translationVector2 + totalTranslation;
+         end
+         
+         totalTranslation = totalTranslation + translationVector2;
+         
+         
+         % save the pose for further use
+         poses(I,1:2) = totalTranslation (1:2);
+         poses(I,3) = offsetAngle;
+         poses(I,4) = time;
+         
+         % save the rotated but untranslated points
+         lastXYZ = XYZ;  % to use for next time
+
          lastDistances = XYZdistances;
          lastMean = XYZmean;
          
-      end % of if it was the first time
+      end % of if else it wasn't the first time
       
-
-%       subplot(2,3,3)
-      plot3(XYZ(:,1),XYZ(:,2),XYZ(:,3),'.');
-      title('Original scans');
-      hold on
-      axis equal
-      drawnow
+      % draw what it is doing.
+%       figure(1)
+%       plot3(XYZ2(:,1),XYZ2(:,2),XYZ2(:,3),'.');
+%       title('Original scans');
+%       hold on
+%       axis equal
+%       drawnow
    end % of going through the requested number of scans
 
    axis equal
-
+   fprintf('\n');
+   
+   save('poses.mat','poses');
+   
+   for I = 1:10
+      beep
+      pause(.1)
+   end
